@@ -26,9 +26,11 @@ from pyrogram.errors import UserNotParticipant
     ),
     group=4,
 )
-async def media_receive_handler(_, m: Message):
+async def media_receive_handler(client, m: Message):
     try:
         user = await client.get_chat_member(Var.UPDATES_CHANNEL, user_id=m.from_user.id)
+        if user.status == "kicked":
+            return await m.reply("You are banned from using this bot.", quote=True)
     except UserNotParticipant:
         return await m.reply(text="""<i>Join The Update Channel To Use Me.</i>""",
                 reply_markup=InlineKeyboardMarkup(
@@ -60,9 +62,8 @@ async def media_receive_handler(_, m: Message):
                 [[InlineKeyboardButton("Open", url=stream_link)]]
             ),
         )
+                             
+        await log_msg.reply_text(text=f"Requested by [{m.from_user.first_name}](tg://user?id={m.from_user.id})\n**User ID:** `{m.from_user.id}`\n**Download Link:** {stream_link}\n**Rapid Link:** {short_link}", disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN, quote=True)
     except Exception as e:
         logger.exception(e) # Log the error
-        if not m.from_user.username or m.from_user.username not in Var.ALLOWED_USERS:
-            await m.reply("Something went wrong. Please contact the bot admin for support.", quote=True)
-        else:
-            await m.reply("An unexpected error occurred. Please try again later.", quote=True)
+        await m.reply("Something went wrong. Please contact the bot @iamLiquidX for support.", quote=True)
